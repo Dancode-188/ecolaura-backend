@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const supertokens = require("./config/supertokens");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -21,7 +22,9 @@ app.use(express.json());
 // SuperTokens middleware
 app.use(supertokens.middleware());
 
-// Routes (to be added later)
+// Routes
+app.use("/api/auth", authRoutes);
+
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
 });
