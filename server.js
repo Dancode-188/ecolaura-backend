@@ -1,6 +1,6 @@
 require("dotenv").config();
 const app = require("./src/app");
-const { sequelize } = require("./src/config/database");
+const { sequelize, syncDatabase } = require("./src/config/database");
 
 const PORT = process.env.PORT || 3000;
 
@@ -18,6 +18,7 @@ async function assertDatabaseConnectionOk() {
 
 async function init() {
   await assertDatabaseConnectionOk();
+  await syncDatabase();
 
   console.log(`Starting Sequelize + Express example on port ${PORT}...`);
 

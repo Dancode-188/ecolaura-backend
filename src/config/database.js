@@ -7,7 +7,7 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     dialect: "postgres",
-    logging: false, // set to console.log to see the raw SQL queries
+    logging: false,
     pool: {
       max: 5,
       min: 0,
@@ -17,7 +17,17 @@ const sequelize = new Sequelize(
   }
 );
 
+const syncDatabase = async () => {
+  try {
+    await sequelize.sync({ alter: true });
+    console.log("Database synced successfully");
+  } catch (error) {
+    console.error("Unable to sync the database:", error);
+  }
+};
+
 module.exports = {
   sequelize,
   Sequelize,
+  syncDatabase,
 };
