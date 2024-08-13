@@ -1,12 +1,73 @@
-const { User, Subscription, SubscriptionBox } = require("../models");
+const {
+  User,
+  Subscription,
+  SubscriptionBox,
+  Notification,
+} = require("../models");
 const { Op } = require("sequelize");
+const admin = require("firebase-admin");
+const nodemailer = require("nodemailer");
 
-exports.sendNotification = async (userId, message) => {
-  // In a real-world scenario, this would integrate with a push notification service,
-  // email service, or SMS gateway. For now, we'll just console.log the notification.
-  console.log(`Notification for user ${userId}: ${message}`);
+// Initialize Firebase Admin SDK
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  }),
+});
 
-  // Here, you might also save the notification to a database for the user to view later
+// Initialize Nodemailer transporter
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: process.env.EMAIL_SECURE === "true",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+exports.sendNotification = async (userId, message, type = "info") => {
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Save notification to database
+    const notification = await Notification.create({
+      UserId: userId,
+      message,
+      type,
+    });
+
+    // Send push notification if FCM token is available
+    if (user.fcmToken) {
+      await admin.messaging().send({
+        token: user.fcmToken,
+        notification: {
+          title: "Ecolaura Notification",
+          body: message,
+        },
+      });
+    }
+
+    // Send email notification
+    await transporter.sendMail({
+      from: '"Ecolaura" <noreply@ecolaura.com>',
+      to: user.email,
+      subject: "Ecolaura Notification",
+      text: message,
+      html: `<p>${message}</p>`,
+    });
+
+    console.log(`Notification sent to user ${userId}: ${message}`);
+    return notification;
+  } catch (error) {
+    console.error("Error sending notification:", error);
+    throw error;
+  }
 };
 
 exports.checkUpcomingDeliveries = async () => {
@@ -24,7 +85,8 @@ exports.checkUpcomingDeliveries = async () => {
   for (const subscription of subscriptions) {
     await this.sendNotification(
       subscription.User.id,
-      `Your ${subscription.SubscriptionBox.name} is scheduled for delivery tomorrow!`
+      `Your ${subscription.SubscriptionBox.name} is scheduled for delivery tomorrow!`,
+      "delivery"
     );
 
     // Update the next delivery date

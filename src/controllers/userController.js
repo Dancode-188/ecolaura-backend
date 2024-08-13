@@ -73,17 +73,53 @@ exports.getDashboard = async (req, res) => {
   }
 };
 
+exports.updateFCMToken = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const { fcmToken } = req.body;
+
+    await User.update({ fcmToken }, { where: { id: userId } });
+
+    res.json({ message: "FCM token updated successfully" });
+  } catch (error) {
+    console.error("Error updating FCM token:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 exports.getNotifications = async (req, res) => {
   try {
     const userId = req.session.getUserId();
     const notifications = await Notification.findAll({
       where: { UserId: userId },
       order: [["createdAt", "DESC"]],
-      limit: 20, // Limit to the 20 most recent notifications
+      limit: 50,
     });
+
     res.json(notifications);
   } catch (error) {
     console.error("Error fetching notifications:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.markNotificationAsRead = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const { notificationId } = req.params;
+
+    const [updatedRows] = await Notification.update(
+      { read: true },
+      { where: { id: notificationId, UserId: userId } }
+    );
+
+    if (updatedRows === 0) {
+      return res.status(404).json({ message: "Notification not found" });
+    }
+
+    res.json({ message: "Notification marked as read" });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

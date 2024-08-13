@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "info",
+    },
     read: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
