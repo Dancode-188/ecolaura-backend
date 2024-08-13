@@ -15,8 +15,15 @@ db.Subscription = require("./Subscription")(sequelize, Sequelize);
 db.Notification = require("./Notification")(sequelize, Sequelize);
 db.SustainabilityPost = require("./SustainabilityPost")(sequelize, Sequelize);
 db.Comment = require("./Comment")(sequelize, Sequelize);
+db.Review = require("./Review")(sequelize, Sequelize);
 
 // Define associations
+db.User.hasMany(db.Review);
+db.Review.belongsTo(db.User);
+
+db.Product.hasMany(db.Review);
+db.Review.belongsTo(db.Product);
+
 db.User.hasMany(db.SustainabilityPost);
 db.SustainabilityPost.belongsTo(db.User);
 

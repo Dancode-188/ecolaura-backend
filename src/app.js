@@ -9,6 +9,7 @@ const productRoutes = require("./routes/productRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const sustainabilityPostRoutes = require("./routes/sustainabilityPostRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/community", sustainabilityPostRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
