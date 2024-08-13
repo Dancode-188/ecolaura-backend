@@ -1,6 +1,7 @@
 const { Product } = require("../models");
 const sustainabilityService = require("../services/sustainabilityService");
 const searchService = require("../services/searchService");
+const recommendationService = require("../services/recommendationService");
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -68,6 +69,38 @@ exports.searchProducts = async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error("Error searching products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getRecommendedProducts = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const recommendedProducts =
+      await recommendationService.getRecommendedProducts(userId);
+    res.json(recommendedProducts);
+  } catch (error) {
+    console.error("Error fetching recommended products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getNewArrivals = async (req, res) => {
+  try {
+    const newArrivals = await recommendationService.getNewArrivals();
+    res.json(newArrivals);
+  } catch (error) {
+    console.error("Error fetching new arrivals:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getTrendingProducts = async (req, res) => {
+  try {
+    const trendingProducts = await recommendationService.getTrendingProducts();
+    res.json(trendingProducts);
+  } catch (error) {
+    console.error("Error fetching trending products:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
