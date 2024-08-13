@@ -135,3 +135,16 @@ exports.getUserAnalytics = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+exports.getComparativeAnalytics = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const comparativeAnalytics = await analyticsService.getComparativeAnalytics(
+      userId
+    );
+    res.json(comparativeAnalytics);
+  } catch (error) {
+    console.error("Error fetching comparative analytics:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

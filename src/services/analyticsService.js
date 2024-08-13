@@ -199,3 +199,102 @@ exports.getRecentActivity = async (userId, startDate) => {
     }
   });
 };
+
+exports.getComparativeAnalytics = async (userId) => {
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const [userStats, platformAverages, userRank] = await Promise.all([
+    this.getUserStats(userId),
+    this.getPlatformAverages(),
+    this.getUserSustainabilityRank(userId),
+  ]);
+
+  return {
+    userStats,
+    platformAverages,
+    userRank,
+  };
+};
+
+exports.getUserStats = async (userId) => {
+  const [totalOrders, totalSpent, sustainabilityImpact, completedGoals] =
+    await Promise.all([
+      Order.count({ where: { UserId: userId } }),
+      Order.sum("totalAmount", { where: { UserId: userId } }),
+      this.calculateSustainabilityImpact(userId),
+      SustainabilityGoal.count({
+        where: { UserId: userId, status: "completed" },
+      }),
+    ]);
+
+  const user = await User.findByPk(userId);
+
+  return {
+    totalOrders,
+    totalSpent: totalSpent || 0,
+    sustainabilityImpact,
+    completedGoals,
+    sustainabilityScore: user.sustainabilityScore,
+  };
+};
+
+exports.getPlatformAverages = async () => {
+  const totalUsers = await User.count();
+  const [avgOrders, avgSpent, avgCompletedGoals, avgSustainabilityScore] =
+    await Promise.all([
+      Order.count() / totalUsers,
+      Order.sum("totalAmount") / totalUsers,
+      SustainabilityGoal.count({ where: { status: "completed" } }) / totalUsers,
+      User.sum("sustainabilityScore") / totalUsers,
+    ]);
+
+  const avgSustainabilityImpact = await this.getAverageSustainabilityImpact();
+
+  return {
+    avgOrders: Math.round(avgOrders * 10) / 10,
+    avgSpent: Math.round(avgSpent * 100) / 100,
+    avgSustainabilityImpact,
+    avgCompletedGoals: Math.round(avgCompletedGoals * 10) / 10,
+    avgSustainabilityScore: Math.round(avgSustainabilityScore * 10) / 10,
+  };
+};
+
+exports.getAverageSustainabilityImpact = async () => {
+  const totalUsers = await User.count();
+  const totalImpact = await Order.findAll({
+    include: [{ model: Product, attributes: ["sustainabilityScore"] }],
+    attributes: [
+      [
+        Sequelize.fn("SUM", Sequelize.col("Products.sustainabilityScore")),
+        "totalScore",
+      ],
+    ],
+    raw: true,
+  });
+
+  const avgScore = totalImpact[0].totalScore / totalUsers;
+
+  return {
+    avgCO2Saved: Math.round(avgScore * 0.1 * 10) / 10,
+    avgWaterSaved: Math.round(avgScore * 2),
+    avgEnergyConserved: Math.round(avgScore * 0.5 * 10) / 10,
+  };
+};
+
+exports.getUserSustainabilityRank = async (userId) => {
+  const users = await User.findAll({
+    attributes: ["id", "sustainabilityScore"],
+    order: [["sustainabilityScore", "DESC"]],
+  });
+
+  const userRank = users.findIndex((user) => user.id === userId) + 1;
+  const totalUsers = users.length;
+
+  return {
+    rank: userRank,
+    percentile: Math.round((1 - userRank / totalUsers) * 100),
+  };
+};

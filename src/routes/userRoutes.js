@@ -14,5 +14,10 @@ router.patch(
   userController.markNotificationAsRead
 );
 router.get("/analytics", requireAuth, userController.getUserAnalytics);
+router.get(
+  "/comparative-analytics",
+  requireAuth,
+  userController.getComparativeAnalytics
+);
 
 module.exports = router;
