@@ -2,19 +2,32 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const supertokens = require("./config/supertokens");
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.WEBSITE_DOMAIN,
+    allowedHeaders: ["content-type", ...supertokens.getAllCORSHeaders()],
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
+
+// SuperTokens middleware
+app.use(supertokens.middleware());
 
 // Routes (to be added later)
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
 });
+
+// SuperTokens error handler
+app.use(supertokens.errorHandler());
 
 // Error handling middleware
 app.use((err, req, res, next) => {
