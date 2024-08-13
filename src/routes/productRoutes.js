@@ -3,6 +3,7 @@ const router = express.Router();
 const productController = require("../controllers/productController");
 const { requireAuth } = require("../middlewares/authMiddleware");
 
+router.get("/search", productController.searchProducts);
 router.get("/", productController.getAllProducts);
 router.get("/:id", productController.getProductById);
 router.post("/", requireAuth, productController.createProduct);

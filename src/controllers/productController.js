@@ -1,5 +1,6 @@
 const { Product } = require("../models");
 const sustainabilityService = require("../services/sustainabilityService");
+const searchService = require("../services/searchService");
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -29,6 +30,9 @@ exports.createProduct = async (req, res) => {
     const productData = req.body;
     productData.sustainabilityScore =
       sustainabilityService.calculateProductSustainabilityScore(productData);
+    productData.minSustainabilityScore = Math.floor(
+      productData.sustainabilityScore * 0.9
+    ); // 90% of the actual score
     const product = await Product.create(productData);
     res.status(201).json(product);
   } catch (error) {
@@ -42,6 +46,9 @@ exports.updateProduct = async (req, res) => {
     const productData = req.body;
     productData.sustainabilityScore =
       sustainabilityService.calculateProductSustainabilityScore(productData);
+    productData.minSustainabilityScore = Math.floor(
+      productData.sustainabilityScore * 0.9
+    ); // 90% of the actual score
     const [updatedRows] = await Product.update(productData, {
       where: { id: req.params.id },
     });
@@ -51,6 +58,16 @@ exports.updateProduct = async (req, res) => {
     res.json({ message: "Product updated successfully" });
   } catch (error) {
     console.error("Error updating product:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.searchProducts = async (req, res) => {
+  try {
+    const result = await searchService.searchProducts(req.query);
+    res.json(result);
+  } catch (error) {
+    console.error("Error searching products:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

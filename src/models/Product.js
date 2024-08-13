@@ -50,6 +50,19 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 1,
     },
+    category: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      defaultValue: [],
+    },
+    minSustainabilityScore: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
   });
 
   return Product;
