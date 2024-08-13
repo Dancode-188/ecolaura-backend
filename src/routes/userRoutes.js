@@ -13,5 +13,6 @@ router.patch(
   requireAuth,
   userController.markNotificationAsRead
 );
+router.get("/analytics", requireAuth, userController.getUserAnalytics);
 
 module.exports = router;

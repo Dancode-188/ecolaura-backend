@@ -2,6 +2,7 @@ const { User } = require("../models");
 const dashboardService = require("../services/dashboardService");
 const { getRandomTips } = require("../utils/sustainabilityTips");
 const { Notification } = require("../models");
+const analyticsService = require("../services/analyticsService");
 
 exports.getProfile = async (req, res) => {
   try {
@@ -120,6 +121,17 @@ exports.markNotificationAsRead = async (req, res) => {
     res.json({ message: "Notification marked as read" });
   } catch (error) {
     console.error("Error marking notification as read:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getUserAnalytics = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const analytics = await analyticsService.getUserAnalytics(userId);
+    res.json(analytics);
+  } catch (error) {
+    console.error("Error fetching user analytics:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
