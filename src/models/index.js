@@ -13,8 +13,19 @@ db.Order = require("./Order")(sequelize, Sequelize);
 db.SubscriptionBox = require("./SubscriptionBox")(sequelize, Sequelize);
 db.Subscription = require("./Subscription")(sequelize, Sequelize);
 db.Notification = require("./Notification")(sequelize, Sequelize);
+db.SustainabilityPost = require("./SustainabilityPost")(sequelize, Sequelize);
+db.Comment = require("./Comment")(sequelize, Sequelize);
 
 // Define associations
+db.User.hasMany(db.SustainabilityPost);
+db.SustainabilityPost.belongsTo(db.User);
+
+db.User.hasMany(db.Comment);
+db.Comment.belongsTo(db.User);
+
+db.SustainabilityPost.hasMany(db.Comment);
+db.Comment.belongsTo(db.SustainabilityPost);
+
 db.User.hasMany(db.Order);
 db.Order.belongsTo(db.User);
 
