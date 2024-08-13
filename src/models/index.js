@@ -16,6 +16,7 @@ db.Notification = require("./Notification")(sequelize, Sequelize);
 db.SustainabilityPost = require("./SustainabilityPost")(sequelize, Sequelize);
 db.Comment = require("./Comment")(sequelize, Sequelize);
 db.Review = require("./Review")(sequelize, Sequelize);
+db.Achievement = require("./Achievement")(sequelize, Sequelize);
 
 // Define associations
 db.User.hasMany(db.Review);

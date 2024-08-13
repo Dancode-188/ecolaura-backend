@@ -25,6 +25,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    sustainabilityPoints: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    level: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+    },
+    // Store achievements as a JSON array
+    achievements: {
+      type: DataTypes.JSON,
+      defaultValue: [],
+    },
   });
 
   return User;

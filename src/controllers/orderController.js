@@ -1,18 +1,32 @@
 const { Order, Product, User } = require("../models");
-const sustainabilityService = require("../services/sustainabilityService");
+//const sustainabilityService = require("../services/sustainabilityService");
 const notificationService = require("../services/notificationService");
+const gamificationService = require("../services/gamificationService");
 
 exports.createOrder = async (req, res) => {
   try {
+    const userId = req.session.getUserId();
+    const { products, totalAmount } = req.body;
+
     const order = await Order.create({
-      UserId: req.session.getUserId(),
-      totalAmount: req.body.totalAmount,
+      UserId: userId,
+      totalAmount,
       status: "pending",
     });
-    await order.setProducts(req.body.productIds);
-    await sustainabilityService.updateUserSustainabilityScore(
-      req.session.getUserId()
+
+    await order.setProducts(products);
+
+    // Award points for the purchase
+    const pointsEarned = Math.floor(totalAmount);
+    await gamificationService.awardPoints(
+      userId,
+      pointsEarned,
+      "making a purchase"
     );
+
+    // Check for new achievements
+    await gamificationService.checkAchievements(userId);
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);

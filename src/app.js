@@ -10,6 +10,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const sustainabilityPostRoutes = require("./routes/sustainabilityPostRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
+const gamificationRoutes = require("./routes/gamificationRoutes");
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/community", sustainabilityPostRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/gamification", gamificationRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
