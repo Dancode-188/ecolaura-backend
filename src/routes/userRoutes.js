@@ -19,5 +19,10 @@ router.get(
   requireAuth,
   userController.getComparativeAnalytics
 );
+router.get(
+  "/personalized-tips",
+  requireAuth,
+  userController.getPersonalizedTips
+);
 
 module.exports = router;

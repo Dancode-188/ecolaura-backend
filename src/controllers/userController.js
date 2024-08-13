@@ -3,6 +3,7 @@ const dashboardService = require("../services/dashboardService");
 const { getRandomTips } = require("../utils/sustainabilityTips");
 const { Notification } = require("../models");
 const analyticsService = require("../services/analyticsService");
+const sustainabilityTipsService = require("../services/sustainabilityTipsService");
 
 exports.getProfile = async (req, res) => {
   try {
@@ -145,6 +146,18 @@ exports.getComparativeAnalytics = async (req, res) => {
     res.json(comparativeAnalytics);
   } catch (error) {
     console.error("Error fetching comparative analytics:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getPersonalizedTips = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const personalizedTips =
+      await sustainabilityTipsService.getPersonalizedTips(userId);
+    res.json(personalizedTips);
+  } catch (error) {
+    console.error("Error fetching personalized tips:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
