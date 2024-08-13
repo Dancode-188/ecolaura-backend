@@ -4,6 +4,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const supertokens = require("./config/supertokens");
 const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const productRoutes = require("./routes/productRoutes");
+const orderRoutes = require("./routes/orderRoutes");
 
 const app = express();
 
@@ -24,6 +27,9 @@ app.use(supertokens.middleware());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
