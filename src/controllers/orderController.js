@@ -1,4 +1,5 @@
 const { Order, Product } = require("../models");
+const sustainabilityService = require("../services/sustainabilityService");
 
 exports.createOrder = async (req, res) => {
   try {
@@ -8,6 +9,9 @@ exports.createOrder = async (req, res) => {
       status: "pending",
     });
     await order.setProducts(req.body.productIds);
+    await sustainabilityService.updateUserSustainabilityScore(
+      req.session.getUserId()
+    );
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);

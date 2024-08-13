@@ -25,6 +25,31 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: 0,
     },
+    recycledMaterialPercentage: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    energyEfficiencyRating: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    carbonFootprint: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    sustainablePackaging: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    expectedLifespan: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+      defaultValue: 1,
+    },
   });
 
   return Product;
