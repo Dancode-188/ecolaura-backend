@@ -18,10 +18,15 @@ db.Comment = require("./Comment")(sequelize, Sequelize);
 db.Review = require("./Review")(sequelize, Sequelize);
 db.Achievement = require("./Achievement")(sequelize, Sequelize);
 db.Admin = require("./Admin")(sequelize, Sequelize);
+db.SustainabilityGoal = require("./SustainabilityGoal")(sequelize, Sequelize);
 
 // Define associations
 db.User.hasMany(db.Review);
 db.Review.belongsTo(db.User);
+
+db.User.hasMany(db.SustainabilityGoal);
+db.SustainabilityGoal.belongsTo(db.User);
+
 
 db.Product.hasMany(db.Review);
 db.Review.belongsTo(db.Product);

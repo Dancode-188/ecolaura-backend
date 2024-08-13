@@ -1,4 +1,10 @@
-const { User, Achievement } = require("../models");
+const {
+  User,
+  Achievement,
+  Order,
+  Review,
+  SustainabilityGoal,
+} = require("../models");
 const notificationService = require("./notificationService");
 
 const POINTS_PER_LEVEL = 100;
@@ -66,17 +72,30 @@ exports.checkAchievements = async (userId) => {
 };
 
 exports.hasMetAchievementCriteria = async (user, achievement) => {
-  // Implement the logic for checking if a user has met the criteria for an achievement
-  // This will vary based on the specific achievements you want to implement
-  // For example:
   switch (achievement.name) {
     case "First Purchase":
-      return (await user.countOrders()) > 0;
+      return (await Order.count({ where: { UserId: user.id } })) > 0;
     case "Eco Warrior":
       return user.sustainabilityPoints >= 1000;
     case "Review Master":
-      return (await user.countReviews()) >= 10;
-    // Add more cases for other achievements
+      return (await Review.count({ where: { UserId: user.id } })) >= 10;
+    case "Goal Setter":
+      return (
+        (await SustainabilityGoal.count({ where: { UserId: user.id } })) >= 1
+      );
+    case "Goal Achiever":
+      return (
+        (await SustainabilityGoal.count({
+          where: { UserId: user.id, status: "completed" },
+        })) >= 1
+      );
+    case "Sustainability Master":
+      return (
+        (await SustainabilityGoal.count({
+          where: { UserId: user.id, status: "completed" },
+        })) >= 10
+      );
+    // Add more cases for other achievements as needed
     default:
       return false;
   }
