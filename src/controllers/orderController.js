@@ -27,12 +27,30 @@ exports.createOrder = async (req, res) => {
     // Check for new achievements
     await gamificationService.checkAchievements(userId);
 
+    // Update user's sustainability score based on purchased products
+    await updateUserSustainabilityScore(userId, products);
+
     res.status(201).json(order);
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+async function updateUserSustainabilityScore(userId, productIds) {
+  const user = await User.findByPk(userId);
+  const products = await Product.findAll({ where: { id: productIds } });
+
+  const averageSustainabilityScore =
+    products.reduce((sum, product) => sum + product.sustainabilityScore, 0) /
+    products.length;
+
+  // Update user's sustainability score (simple moving average)
+  user.sustainabilityScore = Math.round(
+    (user.sustainabilityScore + averageSustainabilityScore) / 2
+  );
+  await user.save();
+}
 
 exports.getUserOrders = async (req, res) => {
   try {

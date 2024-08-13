@@ -1,18 +1,13 @@
-const { User, Product, Order, Sequelize } = require("../models");
+const { User, Product, Order, Review, Sequelize } = require("../models");
 const Op = Sequelize.Op;
 
 const getProductCategories = async (userId) => {
-  const user = await User.findByPk(userId, {
-    include: {
-      model: Order,
-      include: {
-        model: Product,
-        attributes: ["category"],
-      },
-    },
+  const orders = await Order.findAll({
+    where: { UserId: userId },
+    include: [{ model: Product, attributes: ["category"] }],
   });
 
-  const categories = user.Orders.flatMap((order) =>
+  const categories = orders.flatMap((order) =>
     order.Products.map((product) => product.category)
   );
 
@@ -42,7 +37,8 @@ exports.getRecommendedProducts = async (userId, limit = 10) => {
     },
     order: [
       ["sustainabilityScore", "DESC"],
-      [Sequelize.fn("RANDOM")], // Add some randomness to the recommendations
+      ["averageRating", "DESC"],
+      Sequelize.literal("RANDOM()"), // Add some randomness to the recommendations
     ],
     limit: limit,
   });
@@ -58,7 +54,11 @@ exports.getRecommendedProducts = async (userId, limit = 10) => {
           [Op.gte]: userSustainabilityPreference,
         },
       },
-      order: [["sustainabilityScore", "DESC"], [Sequelize.fn("RANDOM")]],
+      order: [
+        ["sustainabilityScore", "DESC"],
+        ["averageRating", "DESC"],
+        Sequelize.literal("RANDOM()"),
+      ],
       limit: limit - recommendedProducts.length,
     });
 
@@ -68,17 +68,33 @@ exports.getRecommendedProducts = async (userId, limit = 10) => {
   return recommendedProducts;
 };
 
-exports.getNewArrivals = async (limit = 5) => {
-  return await Product.findAll({
-    order: [["createdAt", "DESC"]],
+exports.getSimilarProducts = async (productId, limit = 5) => {
+  const product = await Product.findByPk(productId);
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const similarProducts = await Product.findAll({
+    where: {
+      id: { [Op.ne]: productId },
+      category: product.category,
+      sustainabilityScore: {
+        [Op.between]: [
+          product.sustainabilityScore - 10,
+          product.sustainabilityScore + 10,
+        ],
+      },
+    },
+    order: [["averageRating", "DESC"], Sequelize.literal("RANDOM()")],
     limit: limit,
   });
+
+  return similarProducts;
 };
 
 exports.getTrendingProducts = async (limit = 5) => {
-  // This is a simplified version. In a real-world scenario, you might want to
-  // consider factors like recent sales volume, view counts, etc.
-  const oneWeekAgo = new Date(new Date() - 7 * 24 * 60 * 60 * 1000);
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
   const trendingProducts = await Order.findAll({
     attributes: [
@@ -87,19 +103,17 @@ exports.getTrendingProducts = async (limit = 5) => {
     ],
     where: {
       createdAt: {
-        [Op.gte]: oneWeekAgo,
+        [Op.gte]: oneMonthAgo,
       },
     },
     include: [
       {
         model: Product,
-        attributes: [
-          "id",
-          "name",
-          "price",
-          "sustainabilityScore",
-          "description",
-        ],
+        where: {
+          sustainabilityScore: {
+            [Op.gte]: 70, // Only consider products with high sustainability scores
+          },
+        },
       },
     ],
     group: ["ProductId", "Product.id"],

@@ -15,5 +15,6 @@ router.get("/trending", productController.getTrendingProducts);
 router.get("/:id", productController.getProductById);
 router.post("/", requireAuth, productController.createProduct);
 router.put("/:id", requireAuth, productController.updateProduct);
+router.get("/similar/:productId", productController.getSimilarProducts);
 
 module.exports = router;

@@ -85,12 +85,15 @@ exports.getRecommendedProducts = async (req, res) => {
   }
 };
 
-exports.getNewArrivals = async (req, res) => {
+exports.getSimilarProducts = async (req, res) => {
   try {
-    const newArrivals = await recommendationService.getNewArrivals();
-    res.json(newArrivals);
+    const { productId } = req.params;
+    const similarProducts = await recommendationService.getSimilarProducts(
+      productId
+    );
+    res.json(similarProducts);
   } catch (error) {
-    console.error("Error fetching new arrivals:", error);
+    console.error("Error fetching similar products:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
