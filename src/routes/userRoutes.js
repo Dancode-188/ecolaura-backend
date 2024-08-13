@@ -6,5 +6,6 @@ const { requireAuth } = require("../middlewares/authMiddleware");
 router.get("/profile", requireAuth, userController.getProfile);
 router.put("/profile", requireAuth, userController.updateProfile);
 router.get("/dashboard", requireAuth, userController.getDashboard);
+router.get("/notifications", requireAuth, userController.getNotifications);
 
 module.exports = router;

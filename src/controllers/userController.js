@@ -1,6 +1,7 @@
 const { User } = require("../models");
 const dashboardService = require("../services/dashboardService");
 const { getRandomTips } = require("../utils/sustainabilityTips");
+const { Notification } = require("../models");
 
 exports.getProfile = async (req, res) => {
   try {
@@ -68,6 +69,21 @@ exports.getDashboard = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getNotifications = async (req, res) => {
+  try {
+    const userId = req.session.getUserId();
+    const notifications = await Notification.findAll({
+      where: { UserId: userId },
+      order: [["createdAt", "DESC"]],
+      limit: 20, // Limit to the 20 most recent notifications
+    });
+    res.json(notifications);
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };

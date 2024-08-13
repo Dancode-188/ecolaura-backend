@@ -1,4 +1,5 @@
 const { Subscription, SubscriptionBox, User } = require("../models");
+const notificationService = require("../services/notificationService");
 
 exports.subscribeUser = async (req, res) => {
   try {
@@ -19,6 +20,14 @@ exports.subscribeUser = async (req, res) => {
       SubscriptionBoxId: subscriptionBoxId,
       nextDeliveryDate,
     });
+
+    // Send a notification to the user
+    await notificationService.sendNotification(
+      userId,
+      `You've successfully subscribed to ${
+        subscriptionBox.name
+      }! Your first delivery is scheduled for ${nextDeliveryDate.toDateString()}.`
+    );
 
     res.status(201).json(subscription);
   } catch (error) {

@@ -12,10 +12,14 @@ db.Product = require("./Product")(sequelize, Sequelize);
 db.Order = require("./Order")(sequelize, Sequelize);
 db.SubscriptionBox = require("./SubscriptionBox")(sequelize, Sequelize);
 db.Subscription = require("./Subscription")(sequelize, Sequelize);
+db.Notification = require("./Notification")(sequelize, Sequelize);
 
 // Define associations
 db.User.hasMany(db.Order);
 db.Order.belongsTo(db.User);
+
+db.User.hasMany(db.Notification);
+db.Notification.belongsTo(db.User);
 
 db.User.hasMany(db.Subscription);
 db.Subscription.belongsTo(db.User);
