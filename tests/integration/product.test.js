@@ -49,4 +49,72 @@ describe("Product API", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("name", "Test Product");
   });
+
+  test("Update a product", async () => {
+    const product = await Product.create({
+      name: "Original Product",
+      description: "Original description",
+      price: 10.99,
+    });
+
+    const res = await request(app)
+      .put(`/api/products/${product.id}`)
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        name: "Updated Product",
+        price: 15.99,
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("message", "Product updated successfully");
+
+    const updatedProduct = await Product.findByPk(product.id);
+    expect(updatedProduct.name).toBe("Updated Product");
+    expect(updatedProduct.price).toBe(15.99);
+  });
+
+  test("Delete a product", async () => {
+    const product = await Product.create({
+      name: "Product to Delete",
+      description: "This product will be deleted",
+      price: 5.99,
+    });
+
+    const res = await request(app)
+      .delete(`/api/products/${product.id}`)
+      .set("Authorization", `Bearer ${authToken}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("message", "Product deleted successfully");
+
+    const deletedProduct = await Product.findByPk(product.id);
+    expect(deletedProduct).toBeNull();
+  });
+
+  test("Search products", async () => {
+    await Product.bulkCreate([
+      {
+        name: "Eco Bottle",
+        description: "Reusable water bottle",
+        price: 15.99,
+      },
+      {
+        name: "Solar Charger",
+        description: "Portable solar charger",
+        price: 29.99,
+      },
+      {
+        name: "Bamboo Toothbrush",
+        description: "Eco-friendly toothbrush",
+        price: 5.99,
+      },
+    ]);
+
+    const res = await request(app).get("/api/products/search?query=eco");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBe(2);
+    expect(res.body[0]).toHaveProperty("name", "Eco Bottle");
+    expect(res.body[1]).toHaveProperty("name", "Bamboo Toothbrush");
+  });
 });
