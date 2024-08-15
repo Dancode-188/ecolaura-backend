@@ -1,45 +1,78 @@
 const { Order, Product, User } = require("../models");
-//const sustainabilityService = require("../services/sustainabilityService");
 const notificationService = require("../services/notificationService");
 const gamificationService = require("../services/gamificationService");
+const paymentService = require("../services/paymentService");
 
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.session.getUserId();
     const { products, totalAmount } = req.body;
 
+    // Create a payment intent
+    const paymentIntent = await paymentService.createPaymentIntent(totalAmount);
+
     const order = await Order.create({
       UserId: userId,
       totalAmount,
       status: "pending",
+      paymentIntentId: paymentIntent.id,
     });
 
     await order.setProducts(products);
 
-    // Award points for the purchase
-    const pointsEarned = Math.floor(totalAmount);
-    await gamificationService.awardPoints(
-      userId,
-      pointsEarned,
-      "making a purchase"
-    );
-
-    // Check for new achievements
-    await gamificationService.checkAchievements(userId);
-
-    // Update user's sustainability score based on purchased products
-    await updateUserSustainabilityScore(userId, products);
-
-    res.status(201).json(order);
+    res.status(201).json({
+      order,
+      clientSecret: paymentIntent.client_secret,
+    });
   } catch (error) {
     console.error("Error creating order:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-async function updateUserSustainabilityScore(userId, productIds) {
+exports.confirmOrder = async (req, res) => {
+  try {
+    const { orderId, paymentIntentId } = req.body;
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: Product }, { model: User }],
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const paymentIntent = await paymentService.confirmPayment(paymentIntentId);
+
+    if (paymentIntent.status === "succeeded") {
+      order.status = "paid";
+      await order.save();
+
+      // Award points for the purchase
+      const pointsEarned = Math.floor(order.totalAmount);
+      await gamificationService.awardPoints(
+        order.UserId,
+        pointsEarned,
+        "making a purchase"
+      );
+
+      // Check for new achievements
+      await gamificationService.checkAchievements(order.UserId);
+
+      // Update user's sustainability score based on purchased products
+      await updateUserSustainabilityScore(order.UserId, order.Products);
+
+      res.json({ message: "Payment confirmed and order updated" });
+    } else {
+      res.status(400).json({ message: "Payment failed" });
+    }
+  } catch (error) {
+    console.error("Error confirming order:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+async function updateUserSustainabilityScore(userId, products) {
   const user = await User.findByPk(userId);
-  const products = await Product.findAll({ where: { id: productIds } });
 
   const averageSustainabilityScore =
     products.reduce((sum, product) => sum + product.sustainabilityScore, 0) /

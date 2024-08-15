@@ -2,6 +2,7 @@ const { Product } = require("../models");
 const sustainabilityService = require("../services/sustainabilityService");
 const searchService = require("../services/searchService");
 const recommendationService = require("../services/recommendationService");
+const blockchainService = require("../services/blockchainService");
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -35,6 +36,10 @@ exports.createProduct = async (req, res) => {
       productData.sustainabilityScore * 0.9
     ); // 90% of the actual score
     const product = await Product.create(productData);
+
+    // Add product creation event to blockchain
+    await blockchainService.addProductEvent(product.id, "Product Created");
+
     res.status(201).json(product);
   } catch (error) {
     console.error("Error creating product:", error);
@@ -56,6 +61,10 @@ exports.updateProduct = async (req, res) => {
     if (updatedRows === 0) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    // Add product update event to blockchain
+    await blockchainService.addProductEvent(req.params.id, "Product Updated");
+
     res.json({ message: "Product updated successfully" });
   } catch (error) {
     console.error("Error updating product:", error);
@@ -104,6 +113,17 @@ exports.getTrendingProducts = async (req, res) => {
     res.json(trendingProducts);
   } catch (error) {
     console.error("Error fetching trending products:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+exports.getProductHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const history = await blockchainService.getProductHistory(id);
+    res.json(history);
+  } catch (error) {
+    console.error("Error fetching product history:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
