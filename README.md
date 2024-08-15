@@ -6,11 +6,11 @@
 
 
 
-[![Build Status](https://img.shields.io/travis/yourusername/ecolaura/master.svg?style=flat-square)\](https://travis-ci.org/yourusername/ecolaura)
+[![Build Status](https://img.shields.io/travis/Dancode-188/ecolaura-backend/master.svg?style=flat-square)](https://travis-ci.org/Dancode-188/ecolaura-backend)
 
-[![Coverage Status](https://img.shields.io/coveralls/yourusername/ecolaura/master.svg?style=flat-square)\](https://coveralls.io/github/yourusername/ecolaura?branch=master)
+[![Coverage Status](https://img.shields.io/coveralls/Dancode-188/ecolaura-backend/master.svg?style=flat-square)](https://coveralls.io/github/Dancode-188/ecolaura-backend?branch=master)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)\](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 
 
@@ -82,7 +82,7 @@ Ecolaura is a cutting-edge e-commerce platform dedicated to promoting sustainabl
 
 ```
 
-  cd ecolaura
+  cd ecolaura-backend
 
   npm install
 
@@ -158,7 +158,7 @@ npm run test:coverage
 
 
 
-We welcome contributions from the community! Please check out our \[Contribution Guidelines\](CONTRIBUTING.md) for more information on how to get started.
+We welcome contributions from the community! Please check out our [Contribution Guidelines](https://github.com/Dancode-188/ecolaura-docs/blob/main/development/contribution_guide.md) for more information on how to get started.
 
 
 
@@ -166,7 +166,7 @@ We welcome contributions from the community! Please check out our \[Contribution
 
 
 
-For detailed documentation, please visit our [Wiki](https://github.com/yourusername/ecolaura/wiki).
+For detailed documentation, please visit our [Wiki](https://github.com/Dancode-188/ecolaura-backend/wiki).
 
 
 
@@ -182,7 +182,7 @@ Our UI/UX designs are available on [Figma](https://figma.com/file/ecolaura-desig
 
 
 
-See our [project board](https://github.com/Dancode-188/ecolaura/projects/1) for the planned features and enhancements.
+See our [project board](https://github.com/Dancode-188/ecolaura-backend/projects/1) for the planned features and enhancements.
 
 
 
