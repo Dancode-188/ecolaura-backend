@@ -42,6 +42,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/sustainability-goals", sustainabilityGoalRoutes);
+app.use("/api/trade-in", tradeInRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to Ecolaura API" });
