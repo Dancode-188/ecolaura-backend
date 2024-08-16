@@ -10,7 +10,7 @@ router.get(
   requireAuth,
   productController.getRecommendedProducts
 );
-router.get("/new-arrivals", productController.getNewArrivals);
+//router.get("/new-arrivals", productController.getNewArrivals);
 router.get("/trending", productController.getTrendingProducts);
 router.get("/:id", productController.getProductById);
 router.post("/", requireAuth, productController.createProduct);

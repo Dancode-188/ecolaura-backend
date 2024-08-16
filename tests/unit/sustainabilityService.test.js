@@ -1,3 +1,10 @@
+jest.mock("../../src/config/database", () => ({
+  sequelize: {
+    define: jest.fn(),
+    sync: jest.fn(),
+  },
+}));
+
 const sustainabilityService = require("../../src/services/sustainabilityService");
 
 describe("Sustainability Service", () => {

@@ -1,6 +1,10 @@
 const supertokens = require("supertokens-node");
 const Session = require("supertokens-node/recipe/session");
 const EmailPassword = require("supertokens-node/recipe/emailpassword");
+const {
+  middleware,
+  errorHandler,
+} = require("supertokens-node/framework/express");
 
 supertokens.init({
   framework: "express",
@@ -10,8 +14,8 @@ supertokens.init({
   },
   appInfo: {
     appName: "Ecolaura",
-    apiDomain: process.env.API_DOMAIN,
-    websiteDomain: process.env.WEBSITE_DOMAIN,
+    apiDomain: process.env.API_DOMAIN || "http://localhost:3000",
+    websiteDomain: process.env.WEBSITE_DOMAIN || "http://localhost:3000",
     apiBasePath: "/auth",
     websiteBasePath: "/auth",
   },
@@ -19,6 +23,9 @@ supertokens.init({
 });
 
 module.exports = {
-  middleware: supertokens.middleware,
-  errorHandler: supertokens.errorHandler,
+  middleware,
+  errorHandler,
+  getAllCORSHeaders: supertokens.getAllCORSHeaders,
+  EmailPassword,
+  Session,
 };

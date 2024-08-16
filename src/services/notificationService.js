@@ -8,14 +8,16 @@ const { Op } = require("sequelize");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 
-// Initialize Firebase Admin SDK
-admin.initializeApp({
-  credential: admin.credential.cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
-  }),
-});
+// Only initialize Firebase if it hasn't been initialized yet and if the environment variables are set
+if (!admin.apps.length && process.env.FIREBASE_PROJECT_ID) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n") : undefined,
+    }),
+  });
+}
 
 // Initialize Nodemailer transporter
 const transporter = nodemailer.createTransport({
