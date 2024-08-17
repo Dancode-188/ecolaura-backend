@@ -1,4 +1,4 @@
-const { Subscription, SubscriptionBox, User } = require("../models");
+const { Subscription, SubscriptionBox, User, Product } = require("../models");
 const notificationService = require("../services/notificationService");
 
 exports.subscribeUser = async (req, res) => {
