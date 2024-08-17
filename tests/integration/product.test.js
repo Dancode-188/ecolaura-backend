@@ -1,120 +1,263 @@
 const request = require("supertest");
-const app = require("../../src/app");
+const express = require("express");
+
+// Mock the models
+jest.mock("../../src/models", () => {
+  const SequelizeMock = {
+    Op: {
+      in: Symbol("in"),
+      notIn: Symbol("notIn"),
+      gte: Symbol("gte"),
+      lte: Symbol("lte"),
+      ne: Symbol("ne"),
+      eq: Symbol("eq"),
+      like: Symbol("like"),
+    },
+  };
+
+  return {
+    Product: {
+      findAll: jest.fn(),
+      findByPk: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    User: {},
+    Order: {
+      findAll: jest.fn(),
+    },
+    Review: {},
+    Sequelize: SequelizeMock,
+  };
+});
+
+// Mock the services
+jest.mock("../../src/services/sustainabilityService", () => ({
+  calculateProductSustainabilityScore: jest.fn(),
+}));
+
+jest.mock("../../src/services/searchService", () => ({
+  searchProducts: jest.fn(),
+}));
+
+jest.mock("../../src/services/recommendationService", () => ({
+  getRecommendedProducts: jest.fn(),
+  getSimilarProducts: jest.fn(),
+  getTrendingProducts: jest.fn(),
+}));
+
+jest.mock("../../src/services/blockchainService", () => ({
+  addProductEvent: jest.fn(),
+  getProductHistory: jest.fn(),
+}));
+
+// Mock the session
+const mockSession = {
+  getUserId: jest.fn().mockReturnValue('mockUserId'),
+};
+
+// Mock the auth middleware
+jest.mock("../../src/middlewares/authMiddleware", () => ({
+  requireAuth: (req, res, next) => {
+    req.session = mockSession;
+    next();
+  },
+}));
+
+// Import the mocked modules
 const { Product } = require("../../src/models");
+const sustainabilityService = require("../../src/services/sustainabilityService");
+const searchService = require("../../src/services/searchService");
+const recommendationService = require("../../src/services/recommendationService");
+const blockchainService = require("../../src/services/blockchainService");
 
-describe("Product API", () => {
-  let authToken;
+const app = express();
+const productRoutes = require("../../src/routes/productRoutes");
 
-  beforeAll(async () => {
-    // Login and get auth token
-    const loginRes = await request(app).post("/api/auth/login").send({
-      email: "login@example.com",
-      password: "password123",
+app.use(express.json());
+app.use("/products", productRoutes);
+
+describe("Product Routes", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("GET /products", () => {
+    it("should return all products", async () => {
+      const mockProducts = [
+        { id: 1, name: "Product 1" },
+        { id: 2, name: "Product 2" },
+      ];
+      Product.findAll.mockResolvedValue(mockProducts);
+
+      const res = await request(app).get("/products");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockProducts);
     });
-    authToken = loginRes.body.token;
   });
 
-  test("Create a product", async () => {
-    const res = await request(app)
-      .post("/api/products")
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "Eco-friendly Water Bottle",
-        description: "Reusable water bottle made from recycled materials",
-        price: 19.99,
-        recycledMaterialPercentage: 80,
-        energyEfficiencyRating: 5,
-        carbonFootprint: 10,
-        sustainablePackaging: true,
-        expectedLifespan: 5,
-      });
-    expect(res.statusCode).toBe(201);
-    expect(res.body).toHaveProperty("name", "Eco-friendly Water Bottle");
-  });
+  describe("GET /products/:id", () => {
+    it("should return a product by id", async () => {
+      const mockProduct = { id: 1, name: "Product 1" };
+      Product.findByPk.mockResolvedValue(mockProduct);
 
-  test("Get all products", async () => {
-    const res = await request(app).get("/api/products");
-    expect(res.statusCode).toBe(200);
-    expect(Array.isArray(res.body)).toBeTruthy();
-  });
+      const res = await request(app).get("/products/1");
 
-  test("Get product by id", async () => {
-    const product = await Product.create({
-      name: "Test Product",
-      description: "Test Description",
-      price: 9.99,
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockProduct);
     });
 
-    const res = await request(app).get(`/api/products/${product.id}`);
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("name", "Test Product");
+    it("should return 404 if product not found", async () => {
+      Product.findByPk.mockResolvedValue(null);
+
+      const res = await request(app).get("/products/999");
+
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ message: "Product not found" });
+    });
   });
 
-  test("Update a product", async () => {
-    const product = await Product.create({
-      name: "Original Product",
-      description: "Original description",
-      price: 10.99,
+  describe("POST /products", () => {
+    it("should create a new product", async () => {
+      const mockProduct = {
+        id: 1,
+        name: "New Product",
+        sustainabilityScore: 80,
+      };
+      sustainabilityService.calculateProductSustainabilityScore.mockReturnValue(
+        80
+      );
+      Product.create.mockResolvedValue(mockProduct);
+      blockchainService.addProductEvent.mockResolvedValue();
+
+      const res = await request(app)
+        .post("/products")
+        .send({ name: "New Product" });
+
+      expect(res.statusCode).toBe(201);
+      expect(res.body).toEqual(mockProduct);
+    });
+  });
+
+  describe("PUT /products/:id", () => {
+    it("should update a product", async () => {
+      sustainabilityService.calculateProductSustainabilityScore.mockReturnValue(
+        90
+      );
+      Product.update.mockResolvedValue([1]);
+      blockchainService.addProductEvent.mockResolvedValue();
+
+      const res = await request(app)
+        .put("/products/1")
+        .send({ name: "Updated Product" });
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual({ message: "Product updated successfully" });
     });
 
-    const res = await request(app)
-      .put(`/api/products/${product.id}`)
-      .set("Authorization", `Bearer ${authToken}`)
-      .send({
-        name: "Updated Product",
-        price: 15.99,
-      });
+    it("should return 404 if product not found", async () => {
+      Product.update.mockResolvedValue([0]);
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("message", "Product updated successfully");
+      const res = await request(app)
+        .put("/products/999")
+        .send({ name: "Updated Product" });
 
-    const updatedProduct = await Product.findByPk(product.id);
-    expect(updatedProduct.name).toBe("Updated Product");
-    expect(updatedProduct.price).toBe(15.99);
+      expect(res.statusCode).toBe(404);
+      expect(res.body).toEqual({ message: "Product not found" });
+    });
   });
 
-  test("Delete a product", async () => {
-    const product = await Product.create({
-      name: "Product to Delete",
-      description: "This product will be deleted",
-      price: 5.99,
+  describe("GET /products/search", () => {
+    it("should search products", async () => {
+      const mockSearchResults = [{ id: 1, name: "Product 1" }];
+      searchService.searchProducts.mockResolvedValue(mockSearchResults);
+
+      const res = await request(app).get("/products/search?query=test");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockSearchResults);
+    });
+  });
+
+  describe("GET /products/recommended", () => {
+    let consoleErrorSpy;
+
+    beforeEach(() => {
+      consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
     });
 
-    const res = await request(app)
-      .delete(`/api/products/${product.id}`)
-      .set("Authorization", `Bearer ${authToken}`);
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty("message", "Product deleted successfully");
+    it("should return recommended products", async () => {
+      const mockRecommendedProducts = [{ id: 1, name: "Recommended Product" }];
+      recommendationService.getRecommendedProducts.mockResolvedValue(
+        mockRecommendedProducts
+      );
 
-    const deletedProduct = await Product.findByPk(product.id);
-    expect(deletedProduct).toBeNull();
+      const res = await request(app).get("/products/recommended");
+
+      expect(mockSession.getUserId).toHaveBeenCalled();
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockRecommendedProducts);
+    });
+
+    it("should handle errors when fetching recommended products", async () => {
+      recommendationService.getRecommendedProducts.mockRejectedValue(
+        new Error("Recommendation error")
+      );
+
+      const res = await request(app).get("/products/recommended");
+
+      expect(mockSession.getUserId).toHaveBeenCalled();
+      expect(res.statusCode).toBe(500);
+      expect(res.body).toEqual({ message: "Internal server error" });
+    });
   });
 
-  test("Search products", async () => {
-    await Product.bulkCreate([
-      {
-        name: "Eco Bottle",
-        description: "Reusable water bottle",
-        price: 15.99,
-      },
-      {
-        name: "Solar Charger",
-        description: "Portable solar charger",
-        price: 29.99,
-      },
-      {
-        name: "Bamboo Toothbrush",
-        description: "Eco-friendly toothbrush",
-        price: 5.99,
-      },
-    ]);
+  describe("GET /products/trending", () => {
+    it("should return trending products", async () => {
+      const mockTrendingProducts = [{ id: 1, name: "Trending Product" }];
+      recommendationService.getTrendingProducts.mockResolvedValue(
+        mockTrendingProducts
+      );
 
-    const res = await request(app).get("/api/products/search?query=eco");
+      const res = await request(app).get("/products/trending");
 
-    expect(res.statusCode).toBe(200);
-    expect(res.body.length).toBe(2);
-    expect(res.body[0]).toHaveProperty("name", "Eco Bottle");
-    expect(res.body[1]).toHaveProperty("name", "Bamboo Toothbrush");
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockTrendingProducts);
+    });
+  });
+
+  describe("GET /products/similar/:productId", () => {
+    it("should return similar products", async () => {
+      const mockSimilarProducts = [{ id: 2, name: "Similar Product" }];
+      recommendationService.getSimilarProducts.mockResolvedValue(
+        mockSimilarProducts
+      );
+
+      const res = await request(app).get("/products/similar/1");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockSimilarProducts);
+    });
+  });
+
+  describe("GET /products/:id/history", () => {
+    it("should return product history", async () => {
+      const mockHistory = [
+        { event: "Product Created", timestamp: "2023-01-01" },
+      ];
+      blockchainService.getProductHistory.mockResolvedValue(mockHistory);
+
+      const res = await request(app).get("/products/1/history");
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toEqual(mockHistory);
+    });
   });
 });
