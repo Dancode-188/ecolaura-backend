@@ -85,7 +85,8 @@ exports.updateGoal = async (req, res) => {
       await gamificationService.checkAchievements(userId);
     }
 
-    res.json(goal);
+    // Send a plain object representation of the goal, not the Sequelize instance
+    res.json(goal.get({ plain: true }));
   } catch (error) {
     console.error("Error updating sustainability goal:", error);
     res.status(500).json({ message: "Internal server error" });
