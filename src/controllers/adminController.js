@@ -48,7 +48,12 @@ exports.getUsers = async (req, res) => {
     const users = await User.findAll({
       attributes: ["id", "name", "email", "sustainabilityScore", "createdAt"],
     });
-    res.json(users);
+    res.json(
+      users.map((user) => ({
+        ...user.get({ plain: true }),
+        createdAt: user.createdAt.toISOString(),
+      }))
+    );
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Internal server error" });
