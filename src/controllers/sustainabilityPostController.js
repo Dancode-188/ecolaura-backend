@@ -58,7 +58,8 @@ exports.likePost = async (req, res) => {
     }
 
     await post.increment("likes");
-    res.json({ likes: post.likes + 1 });
+    await post.reload();
+    res.json({ likes: post.likes });
   } catch (error) {
     console.error("Error liking sustainability post:", error);
     res.status(500).json({ message: "Internal server error" });
