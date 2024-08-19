@@ -120,4 +120,127 @@ describe("Product Controller", () => {
     });
   });
 
+  describe("createProduct", () => {
+    it("should create a new product successfully", async () => {
+      const mockProductData = {
+        name: "New Product",
+        price: 19.99,
+        category: "Electronics",
+      };
+      const mockCreatedProduct = {
+        id: "1",
+        ...mockProductData,
+        sustainabilityScore: 80,
+        minSustainabilityScore: 72,
+      };
+
+      sustainabilityService.calculateProductSustainabilityScore.mockReturnValue(
+        80
+      );
+      Product.create.mockResolvedValue(mockCreatedProduct);
+      blockchainService.addProductEvent.mockResolvedValue();
+
+      mockReq.body = mockProductData;
+
+      await productController.createProduct(mockReq, mockRes);
+
+      expect(
+        sustainabilityService.calculateProductSustainabilityScore
+      ).toHaveBeenCalledWith(mockProductData);
+      expect(Product.create).toHaveBeenCalledWith({
+        ...mockProductData,
+        sustainabilityScore: 80,
+        minSustainabilityScore: 72,
+      });
+      expect(blockchainService.addProductEvent).toHaveBeenCalledWith(
+        "1",
+        "Product Created"
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(mockCreatedProduct);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      Product.create.mockRejectedValue(new Error("Database error"));
+      mockReq.body = {
+        name: "New Product",
+        price: 19.99,
+        category: "Electronics",
+      };
+
+      await productController.createProduct(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("updateProduct", () => {
+    it("should update a product successfully", async () => {
+      const mockProductData = {
+        name: "Updated Product",
+        price: 29.99,
+        category: "Electronics",
+      };
+
+      sustainabilityService.calculateProductSustainabilityScore.mockReturnValue(
+        85
+      );
+      Product.update.mockResolvedValue([1]);
+      blockchainService.addProductEvent.mockResolvedValue();
+
+      mockReq.params.id = "1";
+      mockReq.body = mockProductData;
+
+      await productController.updateProduct(mockReq, mockRes);
+
+      expect(
+        sustainabilityService.calculateProductSustainabilityScore
+      ).toHaveBeenCalledWith(mockProductData);
+      expect(Product.update).toHaveBeenCalledWith(
+        {
+          ...mockProductData,
+          sustainabilityScore: 85,
+          minSustainabilityScore: 76,
+        },
+        { where: { id: "1" } }
+      );
+      expect(blockchainService.addProductEvent).toHaveBeenCalledWith(
+        "1",
+        "Product Updated"
+      );
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Product updated successfully",
+      });
+    });
+
+    it("should return 404 when product is not found", async () => {
+      Product.update.mockResolvedValue([0]);
+      mockReq.params.id = "999";
+      mockReq.body = { name: "Updated Product" };
+
+      await productController.updateProduct(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Product not found",
+      });
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      Product.update.mockRejectedValue(new Error("Database error"));
+      mockReq.params.id = "1";
+      mockReq.body = { name: "Updated Product" };
+
+      await productController.updateProduct(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
 });
