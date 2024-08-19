@@ -1,4 +1,6 @@
 const userController = require("../../src/controllers/userController");
+const dashboardService = require("../../src/services/dashboardService");
+const { getRandomTips } = require("../../src/utils/sustainabilityTips");
 
 // Mock the required modules
 jest.mock("../../src/models", () => ({
@@ -113,6 +115,108 @@ describe("User Controller", () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
       expect(mockRes.json).toHaveBeenCalledWith({ message: "User not found" });
+    });
+  });
+
+  describe("getDashboard", () => {
+    it("should return dashboard data", async () => {
+      const mockMetrics = { totalOrders: 10, sustainabilityScore: 85 };
+      const mockTopProducts = [{ id: 1, name: "Eco Product" }];
+      const mockRank = { rank: 5, percentile: 90 };
+      const mockTips = ["Tip 1", "Tip 2"];
+
+      dashboardService.calculateUserSustainabilityMetrics.mockResolvedValue(
+        mockMetrics
+      );
+      dashboardService.getTopSustainableProducts.mockResolvedValue(
+        mockTopProducts
+      );
+      dashboardService.getUserSustainabilityRank.mockResolvedValue(mockRank);
+      getRandomTips.mockReturnValue(mockTips);
+
+      await userController.getDashboard(mockReq, mockRes);
+
+      expect(mockRes.json).toHaveBeenCalledWith({
+        metrics: mockMetrics,
+        topProducts: mockTopProducts,
+        rank: mockRank,
+        tips: mockTips,
+      });
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      dashboardService.calculateUserSustainabilityMetrics.mockRejectedValue(
+        new Error("Database error")
+      );
+
+      await userController.getDashboard(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("updateFCMToken", () => {
+    it("should update FCM token successfully", async () => {
+      const { User } = require("../../src/models");
+      User.update.mockResolvedValue([1]);
+      mockReq.body = { fcmToken: "newFCMToken" };
+
+      await userController.updateFCMToken(mockReq, mockRes);
+
+      expect(User.update).toHaveBeenCalledWith(
+        { fcmToken: "newFCMToken" },
+        { where: { id: "testUserId" } }
+      );
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "FCM token updated successfully",
+      });
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      const { User } = require("../../src/models");
+      User.update.mockRejectedValue(new Error("Database error"));
+
+      await userController.updateFCMToken(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("getNotifications", () => {
+    it("should return user notifications", async () => {
+      const { Notification } = require("../../src/models");
+      const mockNotifications = [
+        { id: 1, message: "Notification 1" },
+        { id: 2, message: "Notification 2" },
+      ];
+      Notification.findAll.mockResolvedValue(mockNotifications);
+
+      await userController.getNotifications(mockReq, mockRes);
+
+      expect(Notification.findAll).toHaveBeenCalledWith({
+        where: { UserId: "testUserId" },
+        order: [["createdAt", "DESC"]],
+        limit: 50,
+      });
+      expect(mockRes.json).toHaveBeenCalledWith(mockNotifications);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      const { Notification } = require("../../src/models");
+      Notification.findAll.mockRejectedValue(new Error("Database error"));
+
+      await userController.getNotifications(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
     });
   });
 
