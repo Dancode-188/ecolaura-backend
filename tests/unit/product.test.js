@@ -243,4 +243,160 @@ describe("Product Controller", () => {
     });
   });
 
+  describe("searchProducts", () => {
+    it("should return search results", async () => {
+      const mockSearchResults = [
+        { id: "1", name: "Product 1" },
+        { id: "2", name: "Product 2" },
+      ];
+      searchService.searchProducts.mockResolvedValue(mockSearchResults);
+      mockReq.query = { keyword: "test" };
+
+      await productController.searchProducts(mockReq, mockRes);
+
+      expect(searchService.searchProducts).toHaveBeenCalledWith({
+        keyword: "test",
+      });
+      expect(mockRes.json).toHaveBeenCalledWith(mockSearchResults);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      searchService.searchProducts.mockRejectedValue(new Error("Search error"));
+      mockReq.query = { keyword: "test" };
+
+      await productController.searchProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("getRecommendedProducts", () => {
+    it("should return recommended products", async () => {
+      const mockRecommendedProducts = [
+        { id: "1", name: "Recommended Product 1" },
+        { id: "2", name: "Recommended Product 2" },
+      ];
+      recommendationService.getRecommendedProducts.mockResolvedValue(
+        mockRecommendedProducts
+      );
+
+      await productController.getRecommendedProducts(mockReq, mockRes);
+
+      expect(recommendationService.getRecommendedProducts).toHaveBeenCalledWith(
+        "testUserId"
+      );
+      expect(mockRes.json).toHaveBeenCalledWith(mockRecommendedProducts);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      recommendationService.getRecommendedProducts.mockRejectedValue(
+        new Error("Recommendation error")
+      );
+
+      await productController.getRecommendedProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("getSimilarProducts", () => {
+    it("should return similar products", async () => {
+      const mockSimilarProducts = [
+        { id: "2", name: "Similar Product 1" },
+        { id: "3", name: "Similar Product 2" },
+      ];
+      recommendationService.getSimilarProducts.mockResolvedValue(
+        mockSimilarProducts
+      );
+      mockReq.params.productId = "1";
+
+      await productController.getSimilarProducts(mockReq, mockRes);
+
+      expect(recommendationService.getSimilarProducts).toHaveBeenCalledWith(
+        "1"
+      );
+      expect(mockRes.json).toHaveBeenCalledWith(mockSimilarProducts);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      recommendationService.getSimilarProducts.mockRejectedValue(
+        new Error("Similarity error")
+      );
+      mockReq.params.productId = "1";
+
+      await productController.getSimilarProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("getTrendingProducts", () => {
+    it("should return trending products", async () => {
+      const mockTrendingProducts = [
+        { id: "1", name: "Trending Product 1" },
+        { id: "2", name: "Trending Product 2" },
+      ];
+      recommendationService.getTrendingProducts.mockResolvedValue(
+        mockTrendingProducts
+      );
+
+      await productController.getTrendingProducts(mockReq, mockRes);
+
+      expect(recommendationService.getTrendingProducts).toHaveBeenCalled();
+      expect(mockRes.json).toHaveBeenCalledWith(mockTrendingProducts);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      recommendationService.getTrendingProducts.mockRejectedValue(
+        new Error("Trending error")
+      );
+
+      await productController.getTrendingProducts(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("getProductHistory", () => {
+    it("should return product history", async () => {
+      const mockProductHistory = [
+        { event: "Created", timestamp: "2023-01-01" },
+        { event: "Updated", timestamp: "2023-01-02" },
+      ];
+      blockchainService.getProductHistory.mockResolvedValue(mockProductHistory);
+      mockReq.params.id = "1";
+
+      await productController.getProductHistory(mockReq, mockRes);
+
+      expect(blockchainService.getProductHistory).toHaveBeenCalledWith("1");
+      expect(mockRes.json).toHaveBeenCalledWith(mockProductHistory);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      blockchainService.getProductHistory.mockRejectedValue(
+        new Error("Blockchain error")
+      );
+      mockReq.params.id = "1";
+
+      await productController.getProductHistory(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
 });
