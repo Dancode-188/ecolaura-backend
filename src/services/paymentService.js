@@ -1,15 +1,19 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.createPaymentIntent = async (amount, currency = "usd") => {
+  if (amount <= 0) {
+    throw new Error("Invalid payment amount");
+  }
+
   try {
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Stripe uses cents, ensure it's an integer
+      amount: Math.round(amount * 100),
       currency: currency,
     });
     return paymentIntent;
   } catch (error) {
     console.error("Error creating payment intent:", error);
-    throw error;
+    throw new Error("Stripe API Error");
   }
 };
 

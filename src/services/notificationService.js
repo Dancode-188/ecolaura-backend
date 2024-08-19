@@ -114,3 +114,9 @@ function calculateNextDeliveryDate(frequency) {
       throw new Error("Invalid frequency");
   }
 }
+
+module.exports = {
+  sendNotification: exports.sendNotification,
+  checkUpcomingDeliveries: exports.checkUpcomingDeliveries,
+  calculateNextDeliveryDate
+};
