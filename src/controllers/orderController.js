@@ -59,7 +59,7 @@ exports.confirmOrder = async (req, res) => {
       await gamificationService.checkAchievements(order.UserId);
 
       // Update user's sustainability score based on purchased products
-      await updateUserSustainabilityScore(order.UserId, order.Products);
+      await updateUserSustainabilityScore(order.User, order.Products);
 
       res.json({ message: "Payment confirmed and order updated" });
     } else {
@@ -71,9 +71,7 @@ exports.confirmOrder = async (req, res) => {
   }
 };
 
-async function updateUserSustainabilityScore(userId, products) {
-  const user = await User.findByPk(userId);
-
+async function updateUserSustainabilityScore(user, products) {
   const averageSustainabilityScore =
     products.reduce((sum, product) => sum + product.sustainabilityScore, 0) /
     products.length;
