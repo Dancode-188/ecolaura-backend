@@ -167,4 +167,88 @@ describe("Order Controller", () => {
     });
   });
 
+  describe("getUserOrders", () => {
+    it("should return user orders", async () => {
+      const mockOrders = [
+        { id: "1", totalAmount: 100, Products: [{ name: "Product 1" }] },
+        { id: "2", totalAmount: 200, Products: [{ name: "Product 2" }] },
+      ];
+      Order.findAll.mockResolvedValue(mockOrders);
+
+      await orderController.getUserOrders(mockReq, mockRes);
+
+      expect(Order.findAll).toHaveBeenCalledWith({
+        where: { UserId: "testUserId" },
+        include: [{ model: Product }],
+      });
+      expect(mockRes.json).toHaveBeenCalledWith(mockOrders);
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      Order.findAll.mockRejectedValue(new Error("Database error"));
+
+      await orderController.getUserOrders(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
+  describe("updateOrderStatus", () => {
+    it("should update order status successfully", async () => {
+      const mockUpdatedOrder = {
+        id: "1",
+        status: "delivered",
+        User: { id: "userId" },
+        Products: [{ name: "Product 1" }, { name: "Product 2" }],
+      };
+      Order.update.mockResolvedValue([1]);
+      Order.findByPk.mockResolvedValue(mockUpdatedOrder);
+
+      mockReq.params = { id: "1" };
+      mockReq.body = { status: "delivered" };
+
+      await orderController.updateOrderStatus(mockReq, mockRes);
+
+      expect(Order.update).toHaveBeenCalledWith(
+        { status: "delivered" },
+        { where: { id: "1" } }
+      );
+      expect(notificationService.sendNotification).toHaveBeenCalledWith(
+        "userId",
+        expect.stringContaining("Product 1, Product 2"),
+        "review_reminder"
+      );
+      expect(mockRes.json).toHaveBeenCalledWith(mockUpdatedOrder);
+    });
+
+    it("should return 404 when order is not found", async () => {
+      Order.update.mockResolvedValue([0]);
+
+      mockReq.params = { id: "999" };
+      mockReq.body = { status: "delivered" };
+
+      await orderController.updateOrderStatus(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(mockRes.json).toHaveBeenCalledWith({ message: "Order not found" });
+    });
+
+    it("should handle errors and return 500 status", async () => {
+      Order.update.mockRejectedValue(new Error("Database error"));
+
+      mockReq.params = { id: "1" };
+      mockReq.body = { status: "delivered" };
+
+      await orderController.updateOrderStatus(mockReq, mockRes);
+
+      expect(mockRes.status).toHaveBeenCalledWith(500);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Internal server error",
+      });
+    });
+  });
+
 });
